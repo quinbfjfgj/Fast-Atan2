@@ -1,0 +1,24 @@
+const std = @import("std");
+
+fn fattan2(y: f32, x: f32) f32 {
+    @setFloatMode(.optimized);
+    const pi: f32 = 3.14159265;
+    const half_pi: f32 = 1.57079632;
+    const c1: f32 = 1.0645647; 
+    const c2: f32 = 0.27718237;
+// best posible coefficients for minimizing average global error
+    const ux = @as(u32, @bitCast(x));
+    const uy = @as(u32, @bitCast(y));
+    const abs_x = @as(f32, @bitCast(ux & 0x7FFFFFFF));
+    const abs_y = @as(f32, @bitCast(uy & 0x7FFFFFFF));
+    const swap = abs_y > abs_x;
+    const num = if (swap) abs_x else abs_y;
+    const den = if (swap) abs_y else abs_x;
+// calling @min and @max is slower
+    const z = num / den; 
+// this is, unfortunately, necessary
+    const res = z * (c1 - (c2 * z));
+    var angle = if (swap) half_pi - res else res;
+    if ((ux >> 31) != 0) angle = pi - angle;
+    return @as(f32, @bitCast(@as(u32, @bitCast(angle)) ^ (uy & 0x80000000)));
+}
