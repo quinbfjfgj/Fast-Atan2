@@ -1,26 +1,39 @@
 const std = @import("std");
 
-const pi: f32 = 3.14159265;
-const half_pi: f32 = 1.57079632;
-const C1: f32 = 1.0645647; 
-const C2: f32 = 0.27718237;
-// best posible coefficients for minimizing average global error
-
-fn fattan2(y: f32, x: f32) f32 {
+// standard version
+pub fn atan2_2term(y: f32, x: f32) f32 {
     @setFloatMode(.optimized);
     const ux = @as(u32, @bitCast(x));
     const uy = @as(u32, @bitCast(y));
-    const abs_x = @as(f32, @bitCast(ux & 0x7FFFFFFF));
-    const abs_y = @as(f32, @bitCast(uy & 0x7FFFFFFF));
-    const swap = abs_y > abs_x;
-    const num = if (swap) abs_x else abs_y;
-    const den = if (swap) abs_y else abs_x;
-// calling @min and @max is slower
+    const abs_x_u = ux & 0x7FFFFFFF;
+    const abs_y_u = uy & 0x7FFFFFFF;
+    const swap = abs_y_u > abs_x_u;
+    const num = @min(@as(f32, @bitCast(abs_x_u)), @as(f32, @bitCast(abs_y_u)));
+    const den_u = if (swap) abs_y_u else abs_x_u;
+    const den = @as(f32, @bitCast(den_u | 1));
+    // forces last bit of mantissa to 1 to avoid division by zero
     const z = num / den; 
-// this is, unfortunately, necessary
-    const res = z * (c1 - (c2 * z));
-    var angle = if (swap) half_pi - res else res;
-    if ((ux >> 31) != 0) angle = pi - angle;
-    
-    return @as(f32, @bitCast(@as(u32, @bitCast(angle)) ^ (uy & 0x80000000)));
+    // unavoidable
+    const res = z * (1.0 - 0.273 * z);
+    const angle_base = if (swap) 1.57079632 - res else res;
+    const angle_final = if ((ux >> 31) != 0) 3.14159265 - angle_base else angle_base;
+    return @as(f32, @bitCast(@as(u32, @bitCast(angle_final)) ^ (uy & 0x80000000)));
+}
+
+// MUCH higher precision version with an acceptable speed loss
+pub fn atan2_3term(y: f32, x: f32) f32 {
+    @setFloatMode(.optimized);
+    const ux = @as(u32, @bitCast(x));
+    const uy = @as(u32, @bitCast(y));
+    const abs_x_u = ux & 0x7FFFFFFF;
+    const abs_y_u = uy & 0x7FFFFFFF;
+    const swap = abs_y_u > abs_x_u;
+    const num = @min(@as(f32, @bitCast(abs_x_u)), @as(f32, @bitCast(abs_y_u)));
+    const den_u = if (swap) abs_y_u else abs_x_u;    
+    const den = @as(f32, @bitCast(den_u | 1));
+    const z = num / den; 
+    const res = z * (0.995354 + z * (-0.121434 + z * -0.089476));
+    const angle_base = if (swap) 1.57079632 - res else res;
+    const angle_final = if ((ux >> 31) != 0) 3.14159265 - angle_base else angle_base;
+    return @as(f32, @bitCast(@as(u32, @bitCast(angle_final)) ^ (uy & 0x80000000)));
 }
