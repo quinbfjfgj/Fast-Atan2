@@ -1,7 +1,7 @@
 const std = @import("std");
 
 // standard version
-pub fn atan2_2term(y: f32, x: f32) f32 {
+pub fn fattan2(y: f32, x: f32) f32 {
     @setFloatMode(.optimized);
     const ux = @as(u32, @bitCast(x));
     const uy = @as(u32, @bitCast(y));
@@ -21,7 +21,7 @@ pub fn atan2_2term(y: f32, x: f32) f32 {
 }
 
 // MUCH higher precision version with an acceptable speed loss
-pub fn atan2_3term(y: f32, x: f32) f32 {
+pub fn fattan2_precise(y: f32, x: f32) f32 {
     @setFloatMode(.optimized);
     const ux = @as(u32, @bitCast(x));
     const uy = @as(u32, @bitCast(y));
