@@ -11,7 +11,7 @@ pub fn fattan2(y: f32, x: f32) f32 {
     const num = @min(@as(f32, @bitCast(abs_x_u)), @as(f32, @bitCast(abs_y_u)));
     const den_u = if (swap) abs_y_u else abs_x_u;
     const den = @as(f32, @bitCast(den_u | 1));
-// den_u | 1 is free and prevents NaN
+// changes last bit of mantissa to 1 to prevent NaN cases, free
     const z = num / den; 
 // unavoidable
     const res = z * (1.0585263 + z * -0.2731281);
